@@ -1,0 +1,43 @@
+# Qt Creator 用户配置
+.qtcreator/
+*.pro.user
+*.pro.user.*
+
+# CMake 构建目录
+build/
+build-*/
+cmake-build-*/
+
+# Qt Creator 影子构建目录
+Desktop_Qt_*_Debug/
+Desktop_Qt_*_Release/
+
+# 编译中间文件和生成文件
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.exp
+*.lib
+*.dll
+*.exe
+*.log
+
+# Qt 自动生成文件
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*_autogen/
+
+# 运行时和调试输出
+*.dmp
+*.tmp
+*.bak
