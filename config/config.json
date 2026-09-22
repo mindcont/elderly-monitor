@@ -1,0 +1,6 @@
+{
+  "camera": { "id": "living_room", "rtsp": "", "width": 1920, "height": 1080, "fps": 25 },
+  "ai": { "model": "models/yolo11n.onnx", "confidence": 0.5, "iou": 0.45, "device": "cpu" },
+  "mqtt": { "host": "127.0.0.1", "port": 1883, "topic": "home/ai/living_room/event" },
+  "event": { "enter_confirm_frames": 10, "leave_timeout": 5000, "inactive_timeout": 1800 }
+}
