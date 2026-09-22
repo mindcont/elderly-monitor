@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>1100</width><height>700</height></rect></property>
+  <property name="windowTitle"><string>老人智能监测系统</string></property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="mainLayout">
+    <property name="spacing"><number>12</number></property>
+    <property name="leftMargin"><number>18</number></property><property name="topMargin"><number>16</number></property><property name="rightMargin"><number>18</number></property><property name="bottomMargin"><number>16</number></property>
+    <item><layout class="QHBoxLayout" name="headerLayout"><item><widget class="QLabel" name="titleLabel"><property name="text"><string>老人智能监测系统</string></property><property name="styleSheet"><string>font-size: 22px; font-weight: 600;</string></property></widget></item><item><spacer name="headerSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item><item><widget class="QLabel" name="statusLabel"><property name="text"><string>系统启动中</string></property><property name="styleSheet"><string>color:#2e7d32; font-weight:500;</string></property></widget></item></layout></item>
+    <item><layout class="QHBoxLayout" name="contentLayout"><property name="spacing"><number>12</number></property>
+      <item><widget class="QGroupBox" name="videoBox"><property name="title"><string>实时监控画面</string></property><layout class="QVBoxLayout" name="videoLayout"><item><widget class="QLabel" name="videoPlaceholder"><property name="minimumSize"><size><width>720</width><height>460</height></size></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="text"><string>等待 RTSP 视频流...&#xa;&#xa;检测框和老人活动画面将在此显示</string></property><property name="styleSheet"><string>background:#17212b; color:#b9c7d3; font-size:16px; border-radius:4px;</string></property></widget></item></layout></widget></item>
+      <item><layout class="QVBoxLayout" name="sideLayout"><item><widget class="QGroupBox" name="eventBox"><property name="title"><string>事件状态</string></property><layout class="QVBoxLayout" name="eventLayout"><item><widget class="QLabel" name="eventStateLabel"><property name="text"><string>当前状态：正常</string></property></widget></item><item><widget class="QLabel" name="detectionCountLabel"><property name="text"><string>今日检测：0 次</string></property></widget></item><item><widget class="QLabel" name="alertCountLabel"><property name="text"><string>告警事件：0 条</string></property></widget></item></layout></widget></item><item><widget class="QGroupBox" name="cameraBox"><property name="title"><string>摄像头</string></property><layout class="QVBoxLayout" name="cameraLayout"><item><widget class="QLabel" name="cameraStateLabel"><property name="text"><string>通道 1：未连接</string></property></widget></item><item><widget class="QPushButton" name="configureRtspButton"><property name="text"><string>配置 RTSP 地址</string></property></widget></item></layout></widget></item><item><spacer name="sideSpacer"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property></spacer></item></layout></item>
+    </layout></item>
+    <item><widget class="QLabel" name="footerLabel"><property name="text"><string>MQTT：等待后端适配器    |    YOLO：待连接    |    ByteTrack：已就绪</string></property><property name="styleSheet"><string>color:#607d8b; padding:6px;</string></property></widget></item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/><connections/>
+</ui>

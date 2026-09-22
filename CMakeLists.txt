@@ -19,6 +19,7 @@ add_executable(elderly_monitor
     src/event/EventEngine.cpp src/event/EventEngine.h src/event/DetectionEvent.h
     src/mqtt/MqttClient.cpp src/mqtt/MqttClient.h
     src/ui/MainWindow.cpp src/ui/MainWindow.h
+    src/ui/MainWindow.ui
 )
 target_include_directories(elderly_monitor PRIVATE src)
 target_link_libraries(elderly_monitor PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
