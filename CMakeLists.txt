@@ -7,9 +7,9 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Network)
 
-add_executable(elderly_monitor
+add_executable(elderly-monitor-daemon
     src/main.cpp
     src/app/Application.cpp src/app/Application.h
     src/config/AppConfig.cpp src/config/AppConfig.h
@@ -18,10 +18,8 @@ add_executable(elderly_monitor
     src/tracking/ByteTracker.cpp src/tracking/ByteTracker.h
     src/event/EventEngine.cpp src/event/EventEngine.h src/event/DetectionEvent.h
     src/mqtt/MqttClient.cpp src/mqtt/MqttClient.h
-    src/ui/MainWindow.cpp src/ui/MainWindow.h
-    src/ui/MainWindow.ui
 )
-target_include_directories(elderly_monitor PRIVATE src)
-target_link_libraries(elderly_monitor PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+target_include_directories(elderly-monitor-daemon PRIVATE src)
+target_link_libraries(elderly-monitor-daemon PRIVATE Qt6::Core Qt6::Network)
 
-install(TARGETS elderly_monitor RUNTIME DESTINATION bin)
+install(TARGETS elderly-monitor-daemon RUNTIME DESTINATION bin)

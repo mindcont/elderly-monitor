@@ -23,5 +23,6 @@ AppConfig AppConfig::load(const QString &path)
     c.enterConfirmFrames = event["enter_confirm_frames"].toInt(c.enterConfirmFrames);
     c.leaveTimeoutMs = event["leave_timeout"].toInt(c.leaveTimeoutMs);
     c.inactiveTimeoutSec = event["inactive_timeout"].toInt(c.inactiveTimeoutSec);
+    c.detectIntervalMs = ai["detect_interval_ms"].toInt(c.detectIntervalMs);
     return c;
 }

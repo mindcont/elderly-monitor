@@ -12,5 +12,6 @@ struct AppConfig {
     int enterConfirmFrames = 10;
     int leaveTimeoutMs = 5000;
     int inactiveTimeoutSec = 1800;
+    int detectIntervalMs = 1000;
     static AppConfig load(const QString &path);
 };

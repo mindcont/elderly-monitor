@@ -1,3 +1,3 @@
 #pragma once
-#include <QApplication>
-class Application : public QApplication { public: Application(int &argc, char **argv); int run(); };
+#include <QCoreApplication>
+class Application : public QCoreApplication { public: Application(int &argc, char **argv); int run(); };
