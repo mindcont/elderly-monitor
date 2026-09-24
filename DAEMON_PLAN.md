@@ -15,7 +15,7 @@
 
 ## 第二阶段：树莓派取流
 
-使用纯 C++ 的 GStreamer appsink：
+使用纯 C++ 的 GStreamer appsink；当前已验证 appsink 能收到 320x240 BGR 帧，运行时统计 FPS。人体检测和事件发布通过 `Detection.h` 中的 `PersonDetector`、`EventPublisher` 接口接入：
 
 ```text
 rtspsrc -> rtph264depay -> h264parse -> v4l2h264dec -> videoconvert -> videoscale -> appsink
