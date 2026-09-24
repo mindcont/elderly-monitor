@@ -22,22 +22,35 @@ int main(int argc,char**argv){
         EventState events(c.absenceTimeoutSec, [&](const std::string &name, const PersonDetection &d) {
             if (mqtt) mqtt->publish(name, d);
         });
-        RtspPipeline p(c, [&](const unsigned char *pixels, int width, int height, std::size_t stride) {
-            const auto detection = detector.detectBgr(pixels, width, height, stride);
-            std::cerr << "inference person=" << (detection.personPresent ? "true" : "false")
-                      << " confidence=" << detection.confidence << '\n';
-            events.update(detection);
-        });
-        if(!p.start()) return 2;
-        std::thread t([&p]{p.run();});
-        unsigned long long previous=0;
-        while(running){
-            std::this_thread::sleep_for(std::chrono::seconds(c.reportIntervalSec));
-            auto current=p.framesReceived();
-            std::cout<<"frames="<<current<<" fps="<<(current-previous)/static_cast<double>(c.reportIntervalSec)<<std::endl;
-            previous=current;
+        while (running) {
+            RtspPipeline p(c, [&](const unsigned char *pixels, int width, int height, std::size_t stride) {
+                const auto detection = detector.detectBgr(pixels, width, height, stride);
+                std::cerr << "inference person=" << (detection.personPresent ? "true" : "false")
+                          << " confidence=" << detection.confidence << '\n';
+                events.update(detection);
+            });
+            if(!p.start()) return 2;
+            std::thread t([&p]{p.run();});
+            unsigned long long previous=0;
+            int elapsed=0;
+            while(running && !p.finished()){
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                ++elapsed;
+                if (elapsed >= c.reportIntervalSec) {
+                    auto current=p.framesReceived();
+                    std::cout<<"frames="<<current<<" fps="<<(current-previous)/static_cast<double>(elapsed)<<std::endl;
+                    previous=current;
+                    elapsed=0;
+                }
+            }
+            p.stop();
+            t.join();
+            if (running && p.failed()) {
+                std::cerr << "RTSP stopped; reconnecting in 5 seconds\n";
+                for (int i=0; i<5 && running; ++i)
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
         }
-        p.stop(); t.join();
     } catch (const std::exception &e) {
         std::cerr << "fatal: " << e.what() << '\n';
         return 3;

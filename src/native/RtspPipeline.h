@@ -13,6 +13,8 @@ public:
     void stop();
     void run();
     unsigned long long framesReceived() const { return frames_.load(); }
+    bool finished() const { return finished_.load(); }
+    bool failed() const { return failed_.load(); }
 private:
     static gboolean bus(GstBus *, GstMessage *, gpointer);
     GstElement *pipeline_=nullptr;
@@ -21,4 +23,7 @@ private:
     EnvConfig config_;
     FrameCallback callback_;
     std::atomic<unsigned long long> frames_{0};
+    std::atomic<bool> stopRequested_{false};
+    std::atomic<bool> finished_{false};
+    std::atomic<bool> failed_{false};
 };
