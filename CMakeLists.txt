@@ -8,6 +8,6 @@ pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0>=1.14 gstream
 add_executable(elderly-monitor-daemon
     src/native/main.cpp src/native/EnvConfig.cpp src/native/EnvConfig.h
     src/native/RtspPipeline.cpp src/native/RtspPipeline.h)
-target_link_libraries(elderly-monitor-daemon PRIVATE PkgConfig::GSTREAMER Threads::Threads)
+target_link_libraries(elderly-monitor-daemon PRIVATE PkgConfig::GSTREAMER Threads::Threads atomic)
 target_compile_options(elderly-monitor-daemon PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS elderly-monitor-daemon RUNTIME DESTINATION bin)
