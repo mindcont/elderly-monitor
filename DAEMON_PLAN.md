@@ -8,6 +8,7 @@
 
 - `QCoreApplication` 后台进程，支持 `-c/--config` 指定 JSON 配置。
 - `RtspCamera -> YoloDetector -> EventEngine -> MqttClient` 信号链。
+- RTSP、MQTT 和模型路径支持同目录 `.env` 覆盖；真实 `.env` 不进入 Git，使用 `.env.example` 作为模板。
 - 事件状态机：连续检测确认 `person_entered`，持续检测 `person_present`，超时产生 `person_left`，离开后达到 `inactive_timeout` 产生 `room_inactive`。
 - MQTT 当前为日志适配器，先输出 topic 和 JSON payload，避免在没有 Paho 依赖时假装已经联网。
 - RTSP 和人体模型保留独立适配边界，当前启动时会明确报告尚未接入。

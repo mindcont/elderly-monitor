@@ -30,6 +30,9 @@ Makefile
 *.dll
 *.exe
 *.log
+.env
+.env.*
+!.env.example
 
 # Qt 自动生成文件
 moc_*.cpp
