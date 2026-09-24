@@ -33,6 +33,11 @@ Makefile
 .env
 .env.*
 !.env.example
+models/*.onnx
+models/*.param
+models/*.bin
+models/*.pnnx*
+models/*.py
 
 # Qt 自动生成文件
 moc_*.cpp

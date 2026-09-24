@@ -25,8 +25,3 @@ public:
     virtual ~EventPublisher() = default;
     virtual void publish(const std::string &event, const PersonDetection &detection) = 0;
 };
-
-class MqttEventPublisher : public EventPublisher {
-public:
-    ~MqttEventPublisher() override = default;
-};
