@@ -1,0 +1,21 @@
+[Unit]
+Description=Elderly Monitor RTSP and NCNN daemon
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/elderly-monitor
+EnvironmentFile=/home/pi/elderly-monitor/.env
+ExecStart=/home/pi/elderly-monitor/build-native/elderly-monitor-daemon /home/pi/elderly-monitor/.env
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=elderly-monitor
+
+[Install]
+WantedBy=multi-user.target
