@@ -1,0 +1,12 @@
+elder.wio.me {
+    encode gzip
+    handle /api/* {
+        reverse_proxy 172.17.0.1:8000
+    }
+    handle /ws {
+        reverse_proxy 172.17.0.1:8000
+    }
+    handle {
+        reverse_proxy 172.17.0.1:5173
+    }
+}
