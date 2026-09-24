@@ -18,7 +18,7 @@ cmake --build build-daemon --config Release
 .\build-daemon\Release\elderly-monitor-daemon.exe --config config\config.json
 ```
 
-当前版本已经完成后台进程、配置、事件状态机和 MQTT payload 日志适配；GStreamer RTSP 和 NCNN/TFLite 模型适配仍按 [DAEMON_PLAN.md](DAEMON_PLAN.md) 的第二、三阶段接入。
+当前版本使用纯 C++/GStreamer 构建 RTSP 取流入口；人体检测和 MQTT 事件发送仍按 [DAEMON_PLAN.md](DAEMON_PLAN.md) 的后续阶段接入。
 ```
 
 当前已落地模块：配置、摄像头接口、检测接口、跟踪接口、事件引擎、MQTT接口、Qt主窗口。RTSP、YOLO11、ByteTrack 和 MQTT 的具体第三方适配器保留为独立实现点。

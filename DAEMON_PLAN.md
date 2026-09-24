@@ -15,7 +15,7 @@
 
 ## 第二阶段：树莓派取流
 
-使用 GStreamer appsink：
+使用纯 C++ 的 GStreamer appsink：
 
 ```text
 rtspsrc -> rtph264depay -> h264parse -> v4l2h264dec -> videoconvert -> videoscale -> appsink

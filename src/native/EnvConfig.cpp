@@ -1,0 +1,4 @@
+#include "EnvConfig.h"
+#include <fstream>
+namespace { std::string trim(std::string s) { const auto a=s.find_first_not_of(" \t\r\n"); if(a==std::string::npos)return {}; const auto b=s.find_last_not_of(" \t\r\n"); return s.substr(a,b-a+1); } }
+EnvConfig EnvConfig::load(const std::string &path) { EnvConfig c; std::ifstream f(path); std::string line; while(std::getline(f,line)){ line=trim(line); if(line.empty()||line[0]=='#')continue; auto p=line.find('='); if(p==std::string::npos)continue; auto k=trim(line.substr(0,p)); auto v=trim(line.substr(p+1)); if(v.size()>=2&&((v.front()=='"'&&v.back()=='"')||(v.front()=='\''&&v.back()=='\'')))v=v.substr(1,v.size()-2); if(k=="RTSP_URL")c.rtspUrl=v; else if(k=="CAMERA_ID")c.cameraId=v; else if(k=="GST_LATENCY_MS")c.latencyMs=std::stoi(v); else if(k=="REPORT_INTERVAL_SEC")c.reportIntervalSec=std::stoi(v); } return c; }
