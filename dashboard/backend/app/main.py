@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import ssl
+from urllib.parse import quote, urlsplit, urlunsplit
 from collections import deque
 from datetime import datetime, timezone
 from typing import Annotated
@@ -14,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 POSTGRES_DSN = os.getenv("POSTGRES_DSN", "")
+POSTGRES_PASSWORD_FILE = os.getenv("POSTGRES_PASSWORD_FILE", "")
 MQTT_HOST = os.getenv("MQTT_HOST", "mqtt.wio.me")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "8883"))
 MQTT_TOPIC = os.getenv("MQTT_TOPIC", "home/ai/living_room/event")
@@ -46,7 +48,15 @@ Auth = Annotated[None, Depends(authorized)]
 async def startup() -> None:
     global pool
     if POSTGRES_DSN:
-        pool = await asyncpg.create_pool(POSTGRES_DSN)
+        dsn = POSTGRES_DSN
+        if POSTGRES_PASSWORD_FILE and "@" in dsn and "://" in dsn:
+            password = open(POSTGRES_PASSWORD_FILE, encoding="utf-8").read().strip()
+            parts = urlsplit(dsn)
+            if ":" not in parts.netloc.rsplit("@", 1)[0]:
+                user = parts.netloc.rsplit("@", 1)[0]
+                host = parts.netloc.rsplit("@", 1)[1]
+                dsn = urlunsplit((parts.scheme, f"{user}:{quote(password, safe='')}@{host}", parts.path, parts.query, parts.fragment))
+        pool = await asyncpg.create_pool(dsn)
     asyncio.create_task(mqtt_loop())
 
 
@@ -67,7 +77,7 @@ async def mqtt_loop() -> None:
                     item = {"received_at": datetime.now(timezone.utc).isoformat(), "topic": str(message.topic), **payload}
                     recent.appendleft(item)
                     if pool:
-                        await pool.execute("INSERT INTO mqtt_messages(topic, payload, received_at) VALUES($1, $2::jsonb, now())", str(message.topic), json.dumps(payload))
+                        await pool.execute("INSERT INTO mqtt_messages(topic, payload, received_at) VALUES($1, $2, now())", str(message.topic), json.dumps(payload, ensure_ascii=False))
                     for queue in list(subscribers):
                         await queue.put(item)
         except Exception as exc:
@@ -90,7 +100,15 @@ async def status(_: Auth) -> dict:
 async def messages(_: Auth, limit: int = Query(100, ge=1, le=100)) -> list:
     if pool:
         rows = await pool.fetch("SELECT topic, payload, received_at FROM mqtt_messages ORDER BY received_at DESC LIMIT $1", limit)
-        return [dict(row) for row in rows]
+        result = []
+        for row in rows:
+            item = dict(row)
+            try:
+                item["payload"] = json.loads(item["payload"])
+            except (TypeError, json.JSONDecodeError):
+                pass
+            result.append(item)
+        return result
     return list(recent)[:limit]
 
 
