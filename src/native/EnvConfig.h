@@ -10,6 +10,7 @@ struct EnvConfig {
     std::string mqttPassword;
     std::string mqttTopic = "home/ai/living_room/event";
     std::string mqttCaFile = "/etc/ssl/certs/ca-certificates.crt";
+    bool mqttTls = true;
     int latencyMs = 200;
     int reportIntervalSec = 10;
     int inferenceIntervalMs = 1000;

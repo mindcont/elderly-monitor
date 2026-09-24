@@ -16,7 +16,7 @@ MqttEventPublisher::MqttEventPublisher(const EnvConfig &config) : impl_(std::mak
     if (!impl_->client)
         throw std::runtime_error("cannot create MQTT client");
     mosquitto_username_pw_set(impl_->client, config.mqttUser.c_str(), config.mqttPassword.c_str());
-    if (config.mqttPort == 8883) {
+    if (config.mqttTls) {
         if (mosquitto_tls_set(impl_->client, impl_->config.mqttCaFile.c_str(), nullptr, nullptr, nullptr, nullptr) != MOSQ_ERR_SUCCESS)
             throw std::runtime_error("cannot enable MQTT TLS");
         mosquitto_tls_insecure_set(impl_->client, false);

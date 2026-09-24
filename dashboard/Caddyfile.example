@@ -1,0 +1,5 @@
+elder.wio.me {
+  reverse_proxy /api/* api:8000
+  reverse_proxy /ws web:5173
+  reverse_proxy web:5173
+}
