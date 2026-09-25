@@ -9,6 +9,7 @@
 #include <iostream>
 #include <thread>
 #include <memory>
+#include <mutex>
 namespace { volatile std::sig_atomic_t running=1; void stop(int){running=0;} }
 int main(int argc,char**argv){
     const std::string env=argc>1?argv[1]:".env";
@@ -19,12 +20,20 @@ int main(int argc,char**argv){
         NcnnPersonDetector detector(c.modelParam, c.modelBin, c.modelInputSize);
         std::unique_ptr<MqttEventPublisher> mqtt;
         if (!c.mqttHost.empty()) mqtt = std::make_unique<MqttEventPublisher>(c);
+        std::mutex detectionMutex;
+        PersonDetection latestDetection;
+        bool hasDetection = false;
         EventState events(c.absenceTimeoutSec, [&](const std::string &name, const PersonDetection &d) {
             if (mqtt) mqtt->publish(name, d);
         });
         while (running) {
             RtspPipeline p(c, [&](const unsigned char *pixels, int width, int height, std::size_t stride) {
                 const auto detection = detector.detectBgr(pixels, width, height, stride);
+                {
+                    std::lock_guard<std::mutex> lock(detectionMutex);
+                    latestDetection = detection;
+                    hasDetection = true;
+                }
                 std::cerr << "inference person=" << (detection.personPresent ? "true" : "false")
                           << " confidence=" << detection.confidence << '\n';
                 events.update(detection);
@@ -39,6 +48,11 @@ int main(int argc,char**argv){
                 if (elapsed >= c.reportIntervalSec) {
                     auto current=p.framesReceived();
                     std::cout<<"frames="<<current<<" fps="<<(current-previous)/static_cast<double>(elapsed)<<std::endl;
+                    if (mqtt) {
+                        std::lock_guard<std::mutex> lock(detectionMutex);
+                        if (hasDetection)
+                            mqtt->publish("regular_report", latestDetection);
+                    }
                     previous=current;
                     elapsed=0;
                 }
