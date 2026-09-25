@@ -115,7 +115,7 @@ async def status(_: Auth) -> dict:
 @app.get("/api/messages", dependencies=[Depends(authorized)])
 async def messages(_: Auth, limit: int = Query(100, ge=1, le=100)) -> list:
     if pool:
-        rows = await pool.fetch("SELECT topic, payload, received_at FROM mqtt_messages ORDER BY received_at DESC LIMIT $1", limit)
+        rows = await pool.fetch("SELECT topic, payload, received_at FROM mqtt_messages WHERE payload NOT LIKE '%\"event\":\"regular_report\"%' ORDER BY received_at DESC LIMIT $1", limit)
         result = []
         for row in rows:
             item = dict(row)
@@ -125,7 +125,7 @@ async def messages(_: Auth, limit: int = Query(100, ge=1, le=100)) -> list:
                 pass
             result.append(item)
         return result
-    return list(recent)[:limit]
+    return [item for item in recent if item.get("event") != "regular_report"][:limit]
 
 
 @app.get("/api/events", dependencies=[Depends(authorized)])
