@@ -92,8 +92,24 @@ async def health() -> dict:
 
 @app.get("/api/status", dependencies=[Depends(authorized)])
 async def status(_: Auth) -> dict:
-    latest = recent[0] if recent else None
-    return {"online": latest is not None, "last_report": latest.get("received_at") if latest else None, "latest": latest, "absence_timeout_sec": ABSENCE_TIMEOUT_SEC}
+    latest = None
+    if pool:
+        row = await pool.fetchrow("SELECT topic, payload, received_at FROM mqtt_messages ORDER BY received_at DESC LIMIT 1")
+        if row:
+            latest = dict(row)
+            try:
+                payload = json.loads(latest["payload"])
+                latest = {"received_at": latest["received_at"].isoformat(), "topic": latest["topic"], **payload}
+            except (TypeError, json.JSONDecodeError):
+                latest["received_at"] = latest["received_at"].isoformat()
+    if latest is None and recent:
+        latest = recent[0]
+    last_report = latest.get("received_at") if latest else None
+    online = False
+    if last_report:
+        timestamp = datetime.fromisoformat(last_report.replace("Z", "+00:00"))
+        online = (datetime.now(timezone.utc) - timestamp).total_seconds() <= ABSENCE_TIMEOUT_SEC
+    return {"online": online, "last_report": last_report, "latest": latest, "absence_timeout_sec": ABSENCE_TIMEOUT_SEC}
 
 
 @app.get("/api/messages", dependencies=[Depends(authorized)])
