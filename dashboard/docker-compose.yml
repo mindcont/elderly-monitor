@@ -1,17 +1,19 @@
 services:
   api:
+    restart: unless-stopped
     build: ./backend
     env_file: .env
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]
     networks: [emqx_default]
     volumes:
       - /opt/emqx/postgres_password:/run/secrets/postgres_password:ro
   web:
+    restart: unless-stopped
     image: node:22-alpine
     working_dir: /app
     volumes: ["./frontend:/app"]
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    ports: ["5173:5173"]
+    ports: ["127.0.0.1:5173:5173"]
     networks: [emqx_default]
 
 networks:
