@@ -5,7 +5,8 @@ import os
 import ssl
 from urllib.parse import quote, urlsplit, urlunsplit
 from collections import deque
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, time, timedelta
+from zoneinfo import ZoneInfo
 from typing import Annotated
 
 import asyncpg
@@ -22,6 +23,7 @@ MQTT_TOPIC = os.getenv("MQTT_TOPIC", "home/ai/living_room/event")
 MQTT_USER = os.getenv("MQTT_USER", "")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "")
 ABSENCE_TIMEOUT_SEC = int(os.getenv("ABSENCE_TIMEOUT_SEC", "300"))
+LOCAL_TZ = ZoneInfo(os.getenv("LOCAL_TIMEZONE", "Asia/Shanghai"))
 BASIC_AUTH_USER = os.getenv("BASIC_AUTH_USER", "")
 BASIC_AUTH_PASSWORD = os.getenv("BASIC_AUTH_PASSWORD", "")
 
@@ -115,7 +117,12 @@ async def status(_: Auth) -> dict:
 @app.get("/api/messages", dependencies=[Depends(authorized)])
 async def messages(_: Auth, limit: int = Query(100, ge=1, le=100)) -> list:
     if pool:
-        rows = await pool.fetch("SELECT topic, payload, received_at FROM mqtt_messages WHERE payload NOT LIKE '%\"event\":\"regular_report\"%' ORDER BY received_at DESC LIMIT $1", limit)
+        rows = await pool.fetch("""
+            SELECT topic, payload, received_at
+            FROM mqtt_messages
+            WHERE COALESCE(payload::jsonb->>'event', '') <> 'regular_report'
+            ORDER BY received_at DESC LIMIT $1
+        """, limit)
         result = []
         for row in rows:
             item = dict(row)
@@ -126,6 +133,105 @@ async def messages(_: Auth, limit: int = Query(100, ge=1, le=100)) -> list:
             result.append(item)
         return result
     return [item for item in recent if item.get("event") != "regular_report"][:limit]
+
+
+@app.get("/api/history", dependencies=[Depends(authorized)])
+async def history(_: Auth, day: date = Query(default=None)) -> dict:
+    """Return meaningful events and merged presence intervals for a local day."""
+    selected = day or datetime.now(LOCAL_TZ).date()
+    start_local = datetime.combine(selected, time.min, LOCAL_TZ)
+    end_local = start_local + timedelta(days=1)
+    start_utc = start_local.astimezone(timezone.utc)
+    end_utc = end_local.astimezone(timezone.utc)
+    if not pool:
+        return {"date": selected.isoformat(), "events": [], "intervals": [], "present_seconds": 0}
+
+    rows = await pool.fetch("""
+        SELECT payload, received_at
+        FROM mqtt_messages
+        WHERE received_at >= $1 AND received_at < $2
+        ORDER BY received_at ASC
+    """, start_utc, end_utc)
+    events = []
+    points = []
+    for row in rows:
+        try:
+            payload = json.loads(row["payload"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+        stamp = row["received_at"].astimezone(LOCAL_TZ)
+        present = bool(payload.get("person_present"))
+        points.append((stamp, present))
+        if payload.get("event") != "regular_report":
+            events.append({"received_at": stamp.isoformat(), **payload})
+
+    intervals = []
+    current = None
+    max_gap = timedelta(seconds=ABSENCE_TIMEOUT_SEC + 60)
+    for stamp, present in points:
+        if present:
+            if current is None:
+                current = {"start": stamp, "end": stamp}
+            elif stamp - current["end"] <= max_gap:
+                current["end"] = stamp
+            else:
+                intervals.append(current)
+                current = {"start": stamp, "end": stamp}
+        elif current is not None and stamp - current["end"] > max_gap:
+            intervals.append(current)
+            current = None
+    if current is not None:
+        intervals.append(current)
+
+    result_intervals = []
+    present_seconds = 0
+    for item in intervals:
+        end = item["end"]
+        if end >= start_local and end < end_local:
+            end = min(end + timedelta(seconds=ABSENCE_TIMEOUT_SEC), end_local)
+        seconds = max(0, int((end - item["start"]).total_seconds()))
+        present_seconds += seconds
+        result_intervals.append({"start": item["start"].isoformat(), "end": end.isoformat(), "seconds": seconds})
+    return {"date": selected.isoformat(), "events": list(reversed(events)), "intervals": result_intervals, "present_seconds": present_seconds}
+
+
+@app.get("/api/calendar", dependencies=[Depends(authorized)])
+async def calendar(_: Auth, month: str = Query(..., pattern=r"^\d{4}-\d{2}$")) -> dict:
+    """Return daily in-home totals for the month shown by the calendar."""
+    year, month_number = (int(value) for value in month.split("-"))
+    first = date(year, month_number, 1)
+    next_month = date(year + (month_number == 12), 1 if month_number == 12 else month_number + 1, 1)
+    start = datetime.combine(first, time.min, LOCAL_TZ).astimezone(timezone.utc)
+    end = datetime.combine(next_month, time.min, LOCAL_TZ).astimezone(timezone.utc)
+    totals = {}
+    if pool:
+        rows = await pool.fetch("""
+            SELECT received_at, payload
+            FROM mqtt_messages
+            WHERE received_at >= $1 AND received_at < $2
+            ORDER BY received_at ASC
+        """, start, end)
+        points = []
+        for row in rows:
+            try:
+                payload = json.loads(row["payload"])
+            except (TypeError, json.JSONDecodeError):
+                continue
+            points.append((row["received_at"].astimezone(LOCAL_TZ), bool(payload.get("person_present"))))
+        open_start = None
+        last_present = None
+        for stamp, present in points:
+            if present:
+                if open_start is None:
+                    open_start = stamp
+                last_present = stamp
+            elif open_start is not None and last_present and stamp - last_present > timedelta(seconds=ABSENCE_TIMEOUT_SEC + 60):
+                totals[open_start.date().isoformat()] = totals.get(open_start.date().isoformat(), 0) + int((min(last_present + timedelta(seconds=ABSENCE_TIMEOUT_SEC), stamp) - open_start).total_seconds())
+                open_start = None
+                last_present = None
+        if open_start is not None and last_present:
+            totals[open_start.date().isoformat()] = totals.get(open_start.date().isoformat(), 0) + int((min(last_present + timedelta(seconds=ABSENCE_TIMEOUT_SEC), end.astimezone(LOCAL_TZ)) - open_start).total_seconds())
+    return {"month": month, "days": totals}
 
 
 @app.get("/api/events", dependencies=[Depends(authorized)])

@@ -1,0 +1,17 @@
+.toolbar{min-height:306px;align-items:center}
+.toolbar>div:first-child{flex:1}
+.calendar{flex:0 0 310px;width:310px;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.track{grid-template-columns:repeat(48,1fr)}
+.calendar-grid{min-width:0}
+.calendar-grid button{min-width:0;overflow:hidden}
+.calendar-grid small{font-size:8px;letter-spacing:-.2px}
+.calendar-grid button.duration-zero{background:#eef2f4;color:#718394}
+.calendar-grid button.duration-short{background:#e7f6ef;color:#247a61}
+.calendar-grid button.duration-medium{background:#bce8d5;color:#14694f}
+.calendar-grid button.duration-long{background:#65c99e;color:#083f32}
+.calendar-grid button.duration-full{background:#20a878;color:white}
+.calendar-grid button.duration-full small,.calendar-grid button.duration-long small{color:inherit}
+.state-line{gap:14px;align-items:center}
+.state-line .state-icon{width:56px;height:56px;flex:0 0 56px}
+.state-line strong{font-size:24px}
+@media(max-width:700px){.toolbar{min-height:0;align-items:flex-start}.calendar{width:100%;flex-basis:100%;align-self:auto}}
